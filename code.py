@@ -19,21 +19,28 @@ charging_rate={}
 discharging_rate={}
 Max_battery={}
 avg_speed={}
-K = int(input("Number of Cars"))
+K = int(input("Number of Cars: "))
+
 for i in range(K):
-    src[i]=int(input(f"source node of {i+1}th car"))-1
-    dest[i]=int(input(f"destination node of {i+1}th car"))-1
-    battery_status[i]=float(input(f"initial battery status of {i+1}th car"))
-    charging_rate[i]=float(input(f"charging rate of {i+1}th car"))
-    discharging_rate[i]=float(input(f"discharging rate of {i+1}th car"))
-    Max_battery[i]=float(input(f"Max battery capacity of {i+1}th car"))
-    avg_speed[i]=float(input(f"average speed of {i+1}th car"))
+    src[i]=int(input(f"source node of {i+1}th car: "))-1
+    dest[i]=int(input(f"destination node of {i+1}th car: "))-1
+    battery_status[i]=float(input(f"initial battery status of {i+1}th car: "))
+    charging_rate[i]=float(input(f"charging rate of {i+1}th car: "))
+    discharging_rate[i]=float(input(f"discharging rate of {i+1}th car: "))
+    Max_battery[i]=float(input(f"Max battery capacity of {i+1}th car: "))
+    avg_speed[i]=float(input(f"average speed of {i+1}th car: "))
 
 arrival_time = [[float("inf") for i in range(K)] for i in range(V)]
 
+################ CLASS DEFINITION ################
 
 class car:
     def __init__(self,id, src, dest, battery_status, charging_rate, discharging_rate, Max_battery, avg_speed,adj):
+        '''
+        Initialize object with: car ID, source node, destination node, initial battery status,
+                                charging and discharging rates, battery capacity, average speed,
+                                adjacency matrix
+        '''
         self.id = id
         self.src = src
         self.dest = dest
@@ -59,6 +66,14 @@ class car:
             self.edges.append(temp)
 
     def shortest_path(self):
+        """
+        IN : NA
+        OUT: NA
+        
+        1. Calculate, store the min. distances of nodes from source. Also store parent of each node.
+        2. Battery management for each car.
+        (Assuming no collisions, to be considered later)
+        """
         initial = self.src
         shortest_paths = defaultdict(lambda:(None, float("inf")))
         shortest_paths[initial] = (None, 0)
@@ -106,6 +121,12 @@ class car:
                 arrival_time[self.path[i]][self.id] = arrival_time[self.path[i-1]][self.id]+self.min_time[self.path[i-1]]-self.min_time[self.path[i]]
 
     def update_parameters(self, node, waiting_time):
+        """
+        IN : current node, waiting time at current node
+        OUT: NA
+        
+        Wait time management, given there is one charger at each node.
+        """
         self.min_time[node] += waiting_time
         update = False
         for i in range(len(self.path)):
@@ -115,6 +136,8 @@ class car:
             if(self.path[i]==node):
                 update=True
 
+################ CLASS DEFINITION END ################
+
 all_cars = {}
 for i in range(K):
     obj = car(i,src[i],dest[i],battery_status[i],charging_rate[i],discharging_rate[i],Max_battery[i],avg_speed[i],adj)
@@ -122,7 +145,15 @@ for i in range(K):
     all_cars[i] = obj
 
 def schedule(cars_list, prev_charging_car, charge_time_left_list, conflict_node):
-    """"""
+    """
+    IN : 
+        cars_list             - list of cars waiting
+        prev_charging_car     - car charging currently
+        charge_time_left_list - V-dimensional vector
+        conflict_node         - address of conflict node
+    OUT: 
+        ID of car to be charged
+    """
     car_obj_list = [w[0] for w in cars_list]
     if len(car_obj_list)==1:
         return car_obj_list[0].id
@@ -131,6 +162,9 @@ def schedule(cars_list, prev_charging_car, charge_time_left_list, conflict_node)
    
 # make global time list
 global_time_list = []
+
+# stores all event info [car_object, "arrival"/"departure", node, time of event]
+# sorted by time
 for conflict_node in range(V):
     cars_present = [all_cars[i] for i in range(K) if arrival_time[conflict_node][i]!=float("inf")]
     charge_time_left_list = [0]*K
@@ -146,6 +180,8 @@ cars_list_list = [[]]*V  # num nodes X num cars at node
 prev_event_time_list = [0]*V  # num nodes
 prev_charging_cars_list = [-1]*V  # num nodes
 cntr=0
+
+# resolve all conflicts in global_time_list starting at index 0
 while(len(global_time_list)!=0):
     event = global_time_list.pop(0)    
     conflict_node = event[2]
@@ -162,7 +198,7 @@ while(len(global_time_list)!=0):
             cars_list_list[conflict_node].pop(index_event_id)
             poped=True
         
-        if(len(cars_list_list[conflict_node])>0):
+        if(len(cars_list_list[conflict_node])>0): # if cars are in conflict
             for i in range(len(cars_list_list[conflict_node])):
                 if(cars_list_list[conflict_node][i][0].id!=prev_charging_cars_list[conflict_node]):
                     index_list_in_global_time_list=[]
