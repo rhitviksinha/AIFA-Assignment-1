@@ -34,4 +34,12 @@ is minimized. You need to develop both optimal as well as heuristic algorithms.
 
 ![question](./img/question.JPG)
 
+### Installation Guide:
+
+Python 3.X is used.  
+[Download here](https://www.python.org/downloads/).
+
 ### Files uploaded:
+
+- Source Code [here](code.py).
+- User Manual / Report [here](AIFA%20Assignment%201%20Report.pdf)
