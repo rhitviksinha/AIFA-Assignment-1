@@ -138,14 +138,21 @@ class car:
 
 ################ CLASS DEFINITION END ################
 
+# calculate the minimum time required, stored as an array for every car, from a node to its destination 
+# our initial assumption is no car competes for charging
 all_cars = {}
 for i in range(K):
     obj = car(i,src[i],dest[i],battery_status[i],charging_rate[i],discharging_rate[i],Max_battery[i],avg_speed[i],adj)
     obj.shortest_path()
     all_cars[i] = obj
 
+# the code bellow updates the minimum time required by resolving competition occuring at nodes based on the initial assumption
+# we define an event as a car arriving or departing at a node
+# we make a list of all such events, sorted in ascending order, exceute them one by one, and resolve any competition 
 def schedule(cars_list, prev_charging_car, charge_time_left_list, conflict_node):
     """
+    Decides which car to charge from in case of competition
+
     IN : 
         cars_list             - list of cars waiting
         prev_charging_car     - car charging currently
@@ -163,8 +170,8 @@ def schedule(cars_list, prev_charging_car, charge_time_left_list, conflict_node)
 # make global time list
 global_time_list = []
 
-# stores all event info [car_object, "arrival"/"departure", node, time of event]
-# sorted by time
+# global time list stores a list of events. 
+# each item is a list with a car object, string signifying arival or departure, node at which event occurs, time of event
 for conflict_node in range(V):
     cars_present = [all_cars[i] for i in range(K) if arrival_time[conflict_node][i]!=float("inf")]
     charge_time_left_list = [0]*K
@@ -176,37 +183,40 @@ for conflict_node in range(V):
         global_time_list.append([i,"departure", conflict_node, dep_time])
 global_time_list.sort(key=lambda x: x[3])
 
-cars_list_list = [[]]*V  # num nodes X num cars at node
-prev_event_time_list = [0]*V  # num nodes
-prev_charging_cars_list = [-1]*V  # num nodes
-cntr=0
+cars_list_list = [[]]*V  # (num nodes X num cars at node) list of cars present at a node
+prev_event_time_list = [0]*V  # list of time of the event before the current one for each node
+prev_charging_cars_list = [-1]*V  # list of car charging at each node before the current event occurs
 
 # resolve all conflicts in global_time_list starting at index 0
-while(len(global_time_list)!=0):
-    event = global_time_list.pop(0)    
-    conflict_node = event[2]
-    if(event[1]=="departure"):
+while(len(global_time_list)!=0):  # continue till all events are processed
+    event = global_time_list.pop(0)  # get the soonest occuring event(current event)
+    conflict_node = event[2]  # the node at which current event
+
+    if(event[1]=="departure"):  # if the event is a departure
         poped=False
         index_event_id = -1
-        for i in range(len(cars_list_list[conflict_node])):
+        for i in range(len(cars_list_list[conflict_node])):  
             if(cars_list_list[conflict_node][i][0].id==event[0].id):
-                index_event_id = i
-        waiting_time = event[3]- prev_event_time_list[conflict_node]
+                index_event_id = i  # get the index of the car of the current event in the list of cars of the node of the current event
+        waiting_time = event[3]- prev_event_time_list[conflict_node]  # the cars not charging, if any, have waited from the previous event till now
         prev_event_time_list[conflict_node] = int(event[3])
-        charge_time_left_list[prev_charging_cars_list[conflict_node]] -= waiting_time
-        if(prev_charging_cars_list[conflict_node]==event[0].id):
-            cars_list_list[conflict_node].pop(index_event_id)
+        charge_time_left_list[prev_charging_cars_list[conflict_node]] -= waiting_time  # the car carging from the previous event has charged till now 
+        if(prev_charging_cars_list[conflict_node]==event[0].id):  # if the car departing is the car that was charging then remove it from the list of cars at that node
+            cars_list_list[conflict_node].pop(index_event_id)     # the opposite can happen when a new car wins the competition forcing the older car to wait till its fully charged 
             poped=True
         
-        if(len(cars_list_list[conflict_node])>0): # if cars are in conflict
-            for i in range(len(cars_list_list[conflict_node])):
+        # arival times are calculated according to our initial assumption
+        # so if a car waits at a node, that time is added to the arrival times to the future nodes in its path
+        if(len(cars_list_list[conflict_node])>0):  # if there are cars at the node, update the arival times of cars waiting, update the arrival times
+                                                   # , in array and gobal list, for the waiting cars 
+            for i in range(len(cars_list_list[conflict_node])):  
                 if(cars_list_list[conflict_node][i][0].id!=prev_charging_cars_list[conflict_node]):
                     index_list_in_global_time_list=[]
                     for idx,listn in enumerate(global_time_list):
                         if listn[0].id==cars_list_list[conflict_node][i][0].id and listn[2]==conflict_node:
                             index_list_in_global_time_list.append(idx)
 
-                    cars_list_list[conflict_node][i][0].update_parameters(conflict_node, waiting_time)
+                    cars_list_list[conflict_node][i][0].update_parameters(conflict_node, waiting_time)  # update arrival times
                     if index_list_in_global_time_list:
                         for index_in_global_time_list in index_list_in_global_time_list:
                             old_list = global_time_list[index_in_global_time_list]
@@ -217,10 +227,10 @@ while(len(global_time_list)!=0):
                             global_time_list[index_in_global_time_list] = new_list
                     global_time_list.sort(key=lambda x: x[3])
 
-        if poped and len(cars_list_list[conflict_node])>0:
+        if poped and len(cars_list_list[conflict_node])>0:  # if the cars at the node have changed and there are cars at the node, resolve competition to determine which car charges next 
             prev_charging_cars_list[conflict_node] = schedule(cars_list_list[conflict_node], prev_charging_cars_list[conflict_node], charge_time_left_list, conflict_node)
 
-    else:
+    else:  # if arrival event, basically same as departure, with car being added to car_list 
         index_event_id = -1
         for i in range(len(cars_list_list[conflict_node])):
             if(cars_list_list[conflict_node][i][0].id==event[0].id):
@@ -235,7 +245,7 @@ while(len(global_time_list)!=0):
                     index_list_in_global_time_list=[]
                     for idx,listn in enumerate(global_time_list):
                         if listn[0].id==cars_list_list[conflict_node][i][0].id and listn[2]==conflict_node:
-                            index_list_in_global_time_list.append(idx)
+                            index_list_in_globalp_time_list.append(idx)
 
                     cars_list_list[conflict_node][i][0].update_parameters(conflict_node, waiting_time)
                     if index_list_in_global_time_list:
