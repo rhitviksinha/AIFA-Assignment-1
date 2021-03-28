@@ -36,8 +36,7 @@ is minimized. You need to develop both optimal as well as heuristic algorithms.
 
 ### Installation Guide:
 
-Python 3.X is used.  
-[Download here](https://www.python.org/downloads/).
+- Python 3.X is used. [Download here](https://www.python.org/downloads/) here.
 
 ### Files uploaded:
 
