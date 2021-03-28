@@ -121,62 +121,14 @@ for i in range(K):
     obj.shortest_path()
     all_cars[i] = obj
 
-# def schedule(car_list, prev_charging_car, charge_time_left_list, node):
-# 	car_obj_list = [w[0] for w in car_list]
-#     temp = sorted([sorted([(i, w.min_time[node] + charge_time_left_list[x.id]) for w in car_obj_list if w.id!=x.id], key=lambda x:-x[1]) for i,x in enumerate(car_obj_list)], key=lambda x:x[1])
-# 	return car_obj_list[temp[0]].id
-
-# def schedule(car_list, prev_charging_car, charge_time_left_list, conflict_node):
-#     car_obj_list = [w[0] for w in car_list]
-#     if len(car_obj_list)==1:
-#         return car_obj_list[0].id
-
-#     ideal_car_quant = float("inf")
-#     ideal_car = None
-#     for i in range(len(car_obj_list)):
-#         pres_car_obj = car_obj_list[i]
-#         max_ = float("-inf")
-#         for j in range(len(car_obj_list)):
-#             if(i!=j):
-#                 max_ = max(max_, (car_obj_list[j].min_time[conflict_node]+charge_time_left_list[pres_car_obj.id]))
-#         if(ideal_car_quant>max_):
-#             ideal_car_quant = max_
-#             ideal_car = i
-
-#     return car_obj_list[ideal_car].id
-all_cars = {}
-for i in range(K):
-    obj = car(i,src[i],dest[i],battery_status[i],charging_rate[i],discharging_rate[i],Max_battery[i],avg_speed[i],adj)
-    obj.shortest_path()
-    all_cars[i] = obj
-
-# print("initial value of all cars")
-for idx in all_cars.keys():
-    # print(f"idx:{idx}")
-    # print(f"all_cars[idx].min_time:{all_cars[idx].min_time}")
-
 def schedule(cars_list, prev_charging_car, charge_time_left_list, conflict_node):
+    """"""
     car_obj_list = [w[0] for w in cars_list]
     if len(car_obj_list)==1:
         return car_obj_list[0].id
-
-    # print("SCHEDULING")
-    # print(f"charge_time_left_list:{charge_time_left_list}")
-    # print(f"car_obj_list:{car_obj_list}")
-    # print(f"[w.id for w in car_obj_list]:{[w.id for w in car_obj_list]}")
-    # print(f"[w.min_time for w in car_obj_list]:{[w.min_time for w in car_obj_list]}")
-    # print(f"conflict_node:{conflict_node}")
-    # print([sorted([(i, w.min_time[conflict_node] + charge_time_left_list[x.id]) for j,w in enumerate(car_obj_list) if j!=i], key=lambda y:-y[1]) for i,x in enumerate(car_obj_list)])
-    
     temp = sorted([sorted([(i, w.min_time[conflict_node] + charge_time_left_list[x.id]) for j,w in enumerate(car_obj_list) if j!=i], key=lambda y:-y[1]) for i,x in enumerate(car_obj_list)], key=lambda y:y[0][1])
-    
-    # print(temp[0][0][0])
-
     return temp[0][0][0]
    
-
-
-
 # make global time list
 global_time_list = []
 for conflict_node in range(V):
@@ -190,32 +142,14 @@ for conflict_node in range(V):
         global_time_list.append([i,"departure", conflict_node, dep_time])
 global_time_list.sort(key=lambda x: x[3])
 
-# print(f"global_time_list:{global_time_list}")
-
 cars_list_list = [[]]*V  # num nodes X num cars at node
 prev_event_time_list = [0]*V  # num nodes
 prev_charging_cars_list = [-1]*V  # num nodes
 cntr=0
 while(len(global_time_list)!=0):
-
-    # print(f"\n\ncntr:{cntr}")
-    cntr+=1
-    
-    event = global_time_list.pop(0)
-
-    # print(f"global_time_list after poping:{global_time_list}")
-    
+    event = global_time_list.pop(0)    
     conflict_node = event[2]
-
-    # print(f"cars_list_list before event:{cars_list_list}")
-    # print(f"cars_list_list[conflict_node] before event:{cars_list_list[conflict_node]}")
-    # print(f"prev_event_time_list[conflict_node] before event:{prev_event_time_list[conflict_node]}")
-    # print(f"prev_charging_cars_list[conflict_node] before event:{prev_charging_cars_list[conflict_node]}")
-
     if(event[1]=="departure"):
-
-        # print("departure")
-
         poped=False
         index_event_id = -1
         for i in range(len(cars_list_list[conflict_node])):
@@ -223,9 +157,6 @@ while(len(global_time_list)!=0):
                 index_event_id = i
         waiting_time = event[3]- prev_event_time_list[conflict_node]
         prev_event_time_list[conflict_node] = int(event[3])
-
-        # print(f"prev_charging_cars_list[conflict_node] as index of charge_time_left_list:{prev_charging_cars_list[conflict_node]}")
-
         charge_time_left_list[prev_charging_cars_list[conflict_node]] -= waiting_time
         if(prev_charging_cars_list[conflict_node]==event[0].id):
             cars_list_list[conflict_node].pop(index_event_id)
@@ -254,23 +185,13 @@ while(len(global_time_list)!=0):
             prev_charging_cars_list[conflict_node] = schedule(cars_list_list[conflict_node], prev_charging_cars_list[conflict_node], charge_time_left_list, conflict_node)
 
     else:
-
-        # print("arrival")
-
         index_event_id = -1
         for i in range(len(cars_list_list[conflict_node])):
             if(cars_list_list[conflict_node][i][0].id==event[0].id):
                 index_event_id = i
         waiting_time = event[3] - prev_event_time_list[conflict_node]
         prev_event_time_list[conflict_node] = event[3]
-
-        # print(f"event before appending:{event}")
-        # print(f"cars_list_list[conflict_node] before appending:{cars_list_list[conflict_node]}")
-
         cars_list_list[conflict_node].append(event)
-
-        # print(f"cars_list_list[conflict_node] after appending:{cars_list_list[conflict_node]}")
-
         charge_time_left_list[prev_charging_cars_list[conflict_node]] -= waiting_time
         if(len(cars_list_list[conflict_node])>0):   # changing departure time
             for i in range(len(cars_list_list[conflict_node])):
@@ -293,14 +214,3 @@ while(len(global_time_list)!=0):
 
         if len(cars_list_list[conflict_node])>0:
             prev_charging_cars_list[conflict_node] = schedule(cars_list_list[conflict_node], prev_charging_cars_list[conflict_node], charge_time_left_list, conflict_node)  # scheduling
-
-    # print("\nvalue of all cars after update")
-    # for idx in all_cars.keys():
-    #     print(f"idx:{idx}")
-    #     print(f"all_cars[idx].min_time:{all_cars[idx].min_time}")
-
-print("\nfinal value of all cars")
-for idx in all_cars.keys():
-    print(f"idx:{idx}")
-    print(f"all_cars[idx].min_time:{all_cars[idx].min_time}")
-    
