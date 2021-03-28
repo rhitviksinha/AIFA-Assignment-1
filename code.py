@@ -277,9 +277,9 @@ while(len(global_time_list)!=0):  # continue till all events are processed
 
 ############ RESULT ############
 '''
-The routes can be obtained using the 2-D array arrival_time which conatins 
-all the arrival time of a vehicle at a node. The total time taken by a vehicle 
-can be obatined by its total_time_taken attribute.
+The routes can be obtained using the 2-D array, arrival_time which contains all 
+the arrival time of a vehicle at a node. The total time taken by a vehicle can be 
+obtained by its total_time_taken attribute.
 '''
 # Printing the routes of every vehicle
 for i in range(len(all_cars)):
@@ -293,7 +293,6 @@ for i in range(len(all_cars)):
     print()
 
 # Printing the overall max(Tr)
-
 all_Tr = [all_cars[i].total_time_taken for i in range(len(all_cars))]
 print("The minimised maximum time taken is equal to {}".format(max(all_Tr)))
 print("END")
