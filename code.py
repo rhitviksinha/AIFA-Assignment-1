@@ -1,12 +1,14 @@
 from collections import defaultdict, deque
 from copy import deepcopy
 
-V = int(input("Enter the number of vertices"))
+######### INPUT TAKING ########
+print("START")
+V = int(input("Enter the number of vertices: "))
 adj = [[0 for i in range(V)] for j in range(V)]
 # print("Now start entering the edge distances")
 for i in range(V):
     for j in range(V):
-        inp = input(f"e{i+1}{j+1}->")
+        inp = input(f"e{i+1}{j+1}-> ")
         if inp=="INF" or inp=="inf":
             adj[i][j]=float("inf")
         else:
@@ -32,14 +34,16 @@ for i in range(K):
 
 arrival_time = [[float("inf") for i in range(K)] for i in range(V)]
 
+################ INPUT TAKING DONE ###############
+
 ################ CLASS DEFINITION ################
 
 class car:
     def __init__(self,id, src, dest, battery_status, charging_rate, discharging_rate, Max_battery, avg_speed,adj):
         '''
-        Initialize object with: car ID, source node, destination node, initial battery status,
-                                charging and discharging rates, battery capacity, average speed,
-                                adjacency matrix
+        Initialize object with: car ID, source node, destination node, 
+        initial battery status, charging and discharging rates, 
+        battery capacity, average speed, adjacency matrix
         '''
         self.id = id
         self.src = src
@@ -74,8 +78,9 @@ class car:
         2. Battery management for each car.
         (Assuming no collisions, to be considered later)
         """
+        ##### Dijkstra's algorithm for getting the shortest path between the src and dest node ####
         initial = self.src
-        shortest_paths = defaultdict(lambda:(None, float("inf")))
+        shortest_paths = defaultdict(lambda:(None, float("inf"))) # dictionary for storing the parent and distance from the src node of a node
         shortest_paths[initial] = (None, 0)
         visited = defaultdict(bool)
         q = PriorityQueue()
@@ -89,21 +94,24 @@ class car:
                 if(shortest_paths[curr_node][1]+self.graph[curr_node][next_node]<shortest_paths[next_node][1]):
                     shortest_paths[next_node] = (curr_node, shortest_paths[curr_node][1]+graph[curr_node][next_node])
                     q.put((shortest_paths[next_node][1], next_node))
-
-        # Work back through destinations in shortest path
+        
+        #### Dijkstra's Algorithm End ####
+        # Tarcing the path from the dest to src node using the shortest path dictionary
         current_node = self.dest
         while current_node is not None:
             self.path.append(current_node)
             next_node = shortest_paths[current_node][0]
             current_node = next_node
-        # Reverse path
+        # self.path contains the path from dest to src
+        # so for getting the path from src to dest, list reversal is done
         self.path = self.path[::-1]
-        self.distance = defaultdict(int)
+
+        self.distance = defaultdict(int)  # for storing the distance of every node in the obtained path from dest node 
         for i in range(len(self.path)-2,-1,-1):
             self.distance[self.path[i]] = self.graph[self.path[i]][self.path[i+1]] + self.distance[self.path[i+1]]
 
 
-        self.min_time = defaultdict(int)
+        self.min_time = defaultdict(int) # for storing the minimum time required to reach dest node from the current node
         temp_battery_status = self.battery_status
         self.charge_time_required = defaultdict(int)
         for i in range(len(self.path)):
@@ -120,6 +128,9 @@ class car:
             if(i!=0):
                 arrival_time[self.path[i]][self.id] = arrival_time[self.path[i-1]][self.id]+self.min_time[self.path[i-1]]-self.min_time[self.path[i]]
 
+        self.total_time_taken = self.min_time[self.src]
+
+
     def update_parameters(self, node, waiting_time):
         """
         IN : current node, waiting time at current node
@@ -127,6 +138,9 @@ class car:
         
         Wait time management, given there is one charger at each node.
         """
+        # with the given waiting time at a node, the arrival time and min_time for all the upcoming nodes in the
+        # path will be increased by that waiting time amount
+        self.total_time_taken += waiting_time
         self.min_time[node] += waiting_time
         update = False
         for i in range(len(self.path)):
@@ -260,3 +274,26 @@ while(len(global_time_list)!=0):  # continue till all events are processed
 
         if len(cars_list_list[conflict_node])>0:
             prev_charging_cars_list[conflict_node] = schedule(cars_list_list[conflict_node], prev_charging_cars_list[conflict_node], charge_time_left_list, conflict_node)  # scheduling
+
+############ RESULT ############
+'''
+The routes can be obtained using the 2-D array arrival_time which conatins 
+all the arrival time of a vehicle at a node. The total time taken by a vehicle 
+can be obatined by its total_time_taken attribute.
+'''
+# Printing the routes of every vehicle
+for i in range(len(all_cars)):
+    print("ROUTE OF VEHICLE {}".format(i+1))
+    obj = all_cars[i]
+    print(f"CITY  ARRIVAL TIME")
+    for j in range(len(obj.path)):
+        curr_node = obj.path[i]
+        time_arr = arrival_time[curr_node][obj.id]
+        print("{}  {}".format(curr_node+1, time_arr))
+    print()
+
+# Printing the overall max(Tr)
+
+all_Tr = [all_cars[i].total_time_taken for i in range(len(all_cars))]
+print("The minimised maximum time taken is equal to {}".format(max(all_Tr)))
+print("END")
