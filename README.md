@@ -42,4 +42,4 @@ Python 3.X is used.
 ### Files uploaded:
 
 - Source Code [here](code.py).
-- User Manual / Report [here](AIFA%20Assignment%201%20Report.pdf)
+- User Manual / Report [here](AIFA%20Assignment%201%20Report.pdf). Or view on [Google Docs](https://docs.google.com/document/d/1-F-gcmsqUm3AXGeSysvbtCNyMwWNEtCzMNsTObWTwN0/edit?usp=sharing).
